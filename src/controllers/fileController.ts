@@ -2,28 +2,10 @@ import { Request, Response } from 'express';
 // import FileService from '../services/FileService';
 import { PrismaClient } from '@prisma/client';
 import sharp from 'sharp';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
-import crypto from 'crypto'
+import { uploadToS3 } from '../services/fileServices';
 
 
 const prisma = new PrismaClient();
-
-const generateRandomFileName = (size: number) => crypto.randomBytes(size).toString('hex')
-
-const awsbucketname = process.env.AWS_BUCKET_NAME
-const awsaccesskeyid = process.env.AWS_ACCESS_KEY_ID
-const awssecretkey = process.env.AWS_SECRET_KEY
-const awsregion = process.env.AWS_REGION
-
-// Configure the S3 client object using the credentials.
-const s3 = new S3Client({
-  region: awsregion,
-  credentials: {
-    accessKeyId: awsaccesskeyid ?? '',
-    secretAccessKey: awssecretkey ?? ''
-  }
-})
-
 
 class FileController {
   async uploadFile(req: Request, res: Response): Promise<void> {
@@ -31,16 +13,7 @@ class FileController {
       const { title, description }: { title: string, description: string } = req.body;
       const file = req.file
 
-      // Upload the image to the S3 bucket.
-      const uploadParams = {
-        Bucket: awsbucketname ?? '',
-        Key: generateRandomFileName(16),
-        Body: file?.buffer,
-        ContentType: file?.mimetype,
-      }
-
-      const command = new PutObjectCommand(uploadParams)
-      const data = await s3.send(command)
+      await uploadToS3({ file })
 
       if ((file?.mimetype === 'image/png') || (file?.mimetype === 'image/jpeg')) {
         const fileBuffer = await sharp(file?.buffer).resize({ width: 500, height: 500 }).png().toBuffer()

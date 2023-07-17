@@ -1,32 +1,34 @@
-// const { S3Client } = require('@aws-sdk/client-s3')
-// import multer from 'multer';
-// import multerS3 from 'multer-s3';
-// import dotenv from 'dotenv';
+import crypto from 'crypto'
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
+import { Multer } from 'multer'
 
-// dotenv.config();
 
-// aws.config.update({
-//   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-//   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-// });
+const awsbucketname = process.env.AWS_BUCKET_NAME
+const awsaccesskeyid = process.env.AWS_ACCESS_KEY_ID
+const awssecretkey = process.env.AWS_SECRET_KEY
+const awsregion = process.env.AWS_REGION
 
-// const s3 = new aws.S3();
+// Generate a random file name.
+export const generateRandomFileName = (size: number) => crypto.randomBytes(size).toString('hex')
 
-// const upload = multer({
-//   storage: multerS3({
-//     s3,
-//     bucket: process.env.S3_BUCKET_NAME,
-//     metadata: (req, file, cb) => {
-//       cb(null, { fieldName: file.fieldname });
-//     },
-//     key: (req, file, cb) => {
-//       cb(null, Date.now().toString());
-//     },
-//   }),
-// });
+// Configure the S3 client object using the credentials.
+export const s3 = new S3Client({
+  region: awsregion,
+  credentials: {
+    accessKeyId: awsaccesskeyid ?? '',
+    secretAccessKey: awssecretkey ?? ''
+  }
+})
 
-// class FileService {
-//   static uploadFileMiddleware = upload.single('file');
-// }
+export const uploadToS3 = ({ file }: { file: Express.Multer.File | undefined }) => {
+  // Upload the image to the S3 bucket.
+  const uploadParams = {
+    Bucket: awsbucketname ?? '',
+    Key: generateRandomFileName(16),
+    Body: file?.buffer,
+    ContentType: file?.mimetype,
+  }
 
-// export default FileService;
+  const command = new PutObjectCommand(uploadParams)
+  return s3.send(command)
+}
