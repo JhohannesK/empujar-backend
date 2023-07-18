@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Role } from "@prisma/client";
 import { NextFunction, Request, Response } from "express";
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
@@ -6,13 +6,13 @@ import bcrypt from 'bcrypt';
 const prisma = new PrismaClient();
 
 const generateToken = (userId: string): string => {
-  return jwt.sign({ userId }, 'your-secret-key', { expiresIn: '1d' });
+  return jwt.sign({ userId }, 'file-upload-user-key', { expiresIn: '1d' });
 };
 
 class AuthController {
   async signup(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { email, password, role }: { email: string, password: string, role?: string } = req.body;
+      const { email, password, role }: { email: string, password: string, role?: Role } = req.body;
       const hashedPassword = await bcrypt.hash(password, 10);
 
       const existingUser = await prisma.user.findUnique({
@@ -30,7 +30,7 @@ class AuthController {
         data: {
           email,
           password: hashedPassword,
-          role,
+          role: role ?? "user",
           resetToken: null,
           resetTokenExpiry: null
         }
@@ -49,6 +49,33 @@ class AuthController {
     }
     catch (err) {
       next(err);
+    }
+  }
+
+  async login(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { email, password }: { email: string, password: string } = req.body;
+
+      const existingUser = await prisma.user.findUnique({
+        where: {
+          email
+        }
+      });
+      if (!existingUser) {
+        res.status(400).json({ message: 'Invalid credentials' });
+        throw new Error('Invalid credentials');
+      }
+
+      const checkPassword = await bcrypt.compare(password, existingUser.password);
+      if (!checkPassword) {
+        res.status(400).json({ message: 'Invalid credentials' });
+        throw new Error('Invalid credentials');
+      }
+
+      const token = generateToken(existingUser.id);
+      res.status(200).json({ token, userId: existingUser.id });
+    } catch (error) {
+      next(error)
     }
   }
 }
