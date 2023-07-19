@@ -33,10 +33,11 @@ model File {
   id             String   @id @default(cuid()) @map("_id")
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+  fileName       String
   title          String
   description    String
-  userid         String
+  senderEmail    String
   totalDownloads Int      @default(0)
   emailSentCount Int      @default(0)
-  user           User     @relation(fields: [userid], references: [id])
+  email          User     @relation(fields: [senderEmail], references: [email])
 }

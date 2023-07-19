@@ -3,33 +3,37 @@ import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import sharp from 'sharp';
 import { uploadToS3 } from '../services/fileServices';
+import crypto from 'crypto';
 
 
 const prisma = new PrismaClient();
 
+// Generate a random file name.
+const generateRandomFileName = (size: number) => crypto.randomBytes(size).toString('hex')
+
 class FileController {
   async uploadFile(req: Request, res: Response): Promise<void> {
     try {
-      const { title, description }: { title: string, description: string } = req.body;
+      const { title, description, email }: { title: string, description: string, email: string } = req.body;
       const file = req.file
+      const fileName = generateRandomFileName(16)
 
-      await uploadToS3({ file })
+      await uploadToS3({ file, fileName })
 
       if ((file?.mimetype === 'image/png') || (file?.mimetype === 'image/jpeg')) {
         const fileBuffer = await sharp(file?.buffer).resize({ width: 500, height: 500 }).png().toBuffer()
       }
 
-      const uploadfile = await prisma.file.create({
+      await prisma.file.create({
         data: {
-          title: title,
-          description: description,
-          userid: req.body.userid,
-          user: {
+          title,
+          description,
+          fileName,
+          email: {
             connect: {
-              id: req.body.userid,
-              email: req.body.email
+              email,
             }
-          }
+          },
         }
       })
 

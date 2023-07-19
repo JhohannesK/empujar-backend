@@ -48,6 +48,7 @@ class AuthController {
 
     }
     catch (err) {
+      console.log('Error in signup controller')
       next(err);
     }
   }
@@ -73,7 +74,7 @@ class AuthController {
       }
 
       const token = generateToken(existingUser.id);
-      res.status(200).json({ token, userId: existingUser.id });
+      res.status(200).json({ token, userId: existingUser.id, role: existingUser.role });
     } catch (error) {
       next(error)
     }
