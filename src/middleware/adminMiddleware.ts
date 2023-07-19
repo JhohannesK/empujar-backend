@@ -6,12 +6,13 @@ interface AuthenticatedRequest extends Request {
 }
 
 
-export const isAdmin = (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
-   const userRole = req.user.role;
-   console.log("🚀 ~ file: adminMiddleware.ts:11 ~ isAdmin ~ userRole:", userRole)
+export const isAdmin = (req: Request, res: Response, next: NextFunction): void => {
+   const { role } = req.body;
+   console.log("🚀 ~ file: adminMiddleware.ts:11 ~ isAdmin ~ role:", req.body)
 
-   if (userRole !== 'admin') {
+   if (role !== 'admin') {
       res.status(403).json({ error: 'Unauthorized' });
+      throw new Error('Not authorized as an admin');
       return;
    }
 

@@ -15,6 +15,7 @@ class FileController {
   async uploadFile(req: Request, res: Response): Promise<void> {
     try {
       const { title, description, email }: { title: string, description: string, email: string } = req.body;
+      console.log("🚀 ~ file: fileController.ts:18 ~ FileController ~ uploadFile ~ email:", req.body)
       const file = req.file
       const fileName = generateRandomFileName(16)
 

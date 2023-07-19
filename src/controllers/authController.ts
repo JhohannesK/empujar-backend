@@ -2,6 +2,7 @@ import { PrismaClient, Role } from "@prisma/client";
 import { NextFunction, Request, Response } from "express";
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
+import { sendVerificationEmail } from "../services/sendEmailPasswordReset";
 
 const prisma = new PrismaClient();
 
@@ -77,6 +78,70 @@ class AuthController {
       res.status(200).json({ token, userId: existingUser.id, role: existingUser.role });
     } catch (error) {
       next(error)
+    }
+  }
+
+  async requestPasswordReset(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { email }: { email: string } = req.body;
+
+      const existingUser = await prisma.user.findUnique({
+        where: {
+          email
+        }
+      });
+      if (!existingUser) {
+        res.status(400).json({ message: 'Invalid credentials' });
+        throw new Error('Invalid credentials');
+      }
+
+      const resetToken = generateToken(existingUser.id);
+
+      // Update user record with verification token
+      await prisma.user.update({
+        where: { id: existingUser.id },
+        data: {
+          resetToken: resetToken,
+          resetTokenExpiry: new Date().toISOString()
+        },
+      });
+
+      // Send email with reset token
+      await sendVerificationEmail(email, resetToken);
+
+      res.status(200).json({ message: 'Password reset email sent' });
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  async resetPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { resetToken, password }: { resetToken: string, password: string } = req.body;
+
+      const existingUser = await prisma.user.findFirst({
+        where: {
+          resetToken
+        }
+      })
+
+      if (!existingUser || new Date(existingUser.resetTokenExpiry ?? '') < new Date()) {
+        res.status(400).json({ error: 'Invalid or expired reset token' });
+        return;
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      await prisma.user.update({
+        where: { id: existingUser.id },
+        data: {
+          password: hashedPassword,
+          resetToken: null,
+          resetTokenExpiry: null
+        },
+      })
+    } catch (error) {
+
     }
   }
 }
