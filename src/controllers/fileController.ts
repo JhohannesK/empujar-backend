@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 // import FileService from '../services/FileService';
 import { PrismaClient } from '@prisma/client';
 import sharp from 'sharp';
-import { uploadToS3 } from '../services/fileServices';
+import { getFileStream, uploadToS3 } from '../services/fileServices';
 import crypto from 'crypto';
 
 
@@ -15,6 +15,7 @@ class FileController {
   async uploadFile(req: Request, res: Response): Promise<void> {
     try {
       const { title, description, email }: { title: string, description: string, email: string } = req.body;
+      console.log("🚀 ~ file: fileController.ts:18 ~ FileController ~ uploadFile ~ email:", req.body)
       const file = req.file
       const fileName = generateRandomFileName(16)
 
@@ -47,11 +48,18 @@ class FileController {
 
   async getFiles(req: Request, res: Response) {
     try {
-      const allFiles = prisma.file.findMany({
+      const allFiles = await prisma.file.findMany({
         orderBy: {
           createdAt: 'desc'
         }
       })
+
+      for (let i = 0; i < allFiles.length; i++) {
+        const file = allFiles[i];
+        const fileStream = await getFileStream(file.fileName)
+        file.imageUrl = fileStream
+      }
+
       res.json(allFiles);
     } catch (error) {
       console.error(error);

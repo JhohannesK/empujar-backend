@@ -2,6 +2,7 @@ import express from 'express';
 import FileController from '../controllers/fileController';
 import multer from 'multer'
 import { isAdmin } from '../middleware/adminMiddleware';
+import { authenticateToken } from '../middleware/authenticateTokes';
 
 const router = express.Router();
 const fileController = new FileController();

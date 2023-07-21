@@ -1,6 +1,7 @@
 import crypto from 'crypto'
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
+import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3'
 import { Multer } from 'multer'
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 
 
 const awsbucketname = process.env.AWS_BUCKET_NAME
@@ -30,4 +31,15 @@ export const uploadToS3 = ({ file, fileName }: { file: Express.Multer.File | und
 
   const command = new PutObjectCommand(uploadParams)
   return s3.send(command)
+}
+
+export const getFileStream = async (fileKey: string) => {
+  const downloadParams = {
+    Key: fileKey,
+    Bucket: awsbucketname ?? ''
+  }
+
+  const command = new GetObjectCommand(downloadParams)
+  const url = await getSignedUrl(s3, command, { expiresIn: 3600 })
+  return url
 }

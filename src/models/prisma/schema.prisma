@@ -37,6 +37,7 @@ model File {
   title          String
   description    String
   senderEmail    String
+  imageUrl       String?
   totalDownloads Int      @default(0)
   emailSentCount Int      @default(0)
   email          User     @relation(fields: [senderEmail], references: [email])
