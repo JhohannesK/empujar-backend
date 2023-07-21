@@ -4,13 +4,13 @@ const createTransporter = async () => {
    let testAccount = await nodemailer.createTestAccount();
 
    return nodemailer.createTransport({
-
-      host: "smtp.ethereal.email",
+      service: "gmail",
+      host: "smtp.gmail.email",
       port: 587,
       secure: false,
       auth: {
-         user: testAccount.user,
-         pass: testAccount.pass,
+         user: process.env.EMAIL,
+         pass: process.env.PASSWORD,
       },
    });
 };
