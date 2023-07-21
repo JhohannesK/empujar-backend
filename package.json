@@ -4,7 +4,9 @@
 	"description": "",
 	"main": "index.js",
 	"type": "commonjs",
-	"prisma": "src/models/prisma/schema.prisma",
+	"prisma": {
+		"schema": "src/models/prisma/schema.prisma"
+	},
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"start": "node dist/index.js",
@@ -27,6 +29,7 @@
 	},
 	"dependencies": {
 		"@aws-sdk/client-s3": "^3.370.0",
+		"@aws-sdk/s3-request-presigner": "^3.374.0",
 		"@prisma/client": "^5.0.0",
 		"@types/multer-s3": "^3.0.0",
 		"@types/nodemailer": "^6.4.8",
