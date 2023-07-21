@@ -10,6 +10,8 @@ const prisma = new PrismaClient();
  * 
  */
 export const sendVerificationEmail = async (email: string, verificationToken: string): Promise<void> => {
+   console.log('Sending verification email to: ', email);
+
    try {
       const user = await prisma.user.findUnique({ where: { email } });
       if (!user) {
@@ -20,11 +22,16 @@ export const sendVerificationEmail = async (email: string, verificationToken: st
       const verificationLink = `https://empujar.com/reset-password?token=${verificationToken}`;
 
       const emailContent = {
-         from: `"John Kelvin 👻" <${process.env.EMAIL}>`,
+         from:
+         {
+            name: 'Empujar 👻',
+            address: process.env.EMAIL ?? '',
+         },
+         // `"John Kelvin 👻" <${process.env.EMAIL}>`,
          to: email,
          subject: 'Account Verification',
          html: `
-        <p>Hello,</p>
+        <p>Hello, ${user.name} </p>
         <p>Please click the following link to verify your account:</p>
         <p><a href="${verificationLink}">${verificationLink}</a></p>
         <p>Thank you!</p>
