@@ -17,6 +17,8 @@ Your users should be able to:
 3. Search the file server.
 4. Preview files (PDF, IMAGES, AUDIO, VIDEOS)
 5. Send a file to an email through the platform.
-   Admin
+
+#### Admin
+
 6. Should be able to upload files with a title and description
 7. Should be able to see the number of downloads and number of emails sent for each file

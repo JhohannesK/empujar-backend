@@ -1,5 +1,5 @@
 import crypto from 'crypto'
-import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3'
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3'
 import { Multer } from 'multer'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 
@@ -42,4 +42,13 @@ export const getFileStream = async (fileKey: string) => {
   const command = new GetObjectCommand(downloadParams)
   const url = await getSignedUrl(s3, command)
   return url
+}
+
+export const deleteFileOnS3 = (fileKey: string) => {
+  const deleteParams = {
+    Key: fileKey,
+    Bucket: awsbucketname ?? ''
+  }
+
+  return s3.send(new DeleteObjectCommand(deleteParams))
 }

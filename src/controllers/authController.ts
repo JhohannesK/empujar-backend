@@ -6,8 +6,8 @@ import { sendVerificationEmail } from "../services/sendEmailPasswordReset";
 
 const prisma = new PrismaClient();
 
-const generateToken = (userId: string): string => {
-  return jwt.sign({ userId }, 'file-upload-user-key', { expiresIn: '1d' });
+const generateToken = (role: string): string => {
+  return jwt.sign({ role }, 'file-upload-user-key', { expiresIn: '1d' });
 };
 
 class AuthController {
@@ -37,7 +37,7 @@ class AuthController {
         }
       });
 
-      const token = generateToken(newUser.id);
+      const token = generateToken(newUser.role);
 
       // Update user record with verification token
       await prisma.user.update({
@@ -74,7 +74,7 @@ class AuthController {
         throw new Error('Invalid credentials');
       }
 
-      const token = generateToken(existingUser.id);
+      const token = generateToken(existingUser.role);
       res.status(200).json({ token, userId: existingUser.id, role: existingUser.role });
     } catch (error) {
       next(error)
@@ -95,14 +95,17 @@ class AuthController {
         throw new Error('Invalid credentials');
       }
 
-      const resetToken = generateToken(existingUser.id);
+      const resetToken = generateToken(existingUser.role);
 
       // Update user record with verification token
+      const currentDate = new Date();
+      const nextDay = new Date(currentDate.getTime() + 24 * 60 * 60 * 1000);
+
       await prisma.user.update({
         where: { id: existingUser.id },
         data: {
           resetToken: resetToken,
-          resetTokenExpiry: new Date().toISOString()
+          resetTokenExpiry: nextDay.toISOString()
         },
       });
 
@@ -117,7 +120,8 @@ class AuthController {
 
   async resetPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { resetToken, password }: { resetToken: string, password: string } = req.body;
+      const { password }: { resetToken: string, password: string } = req.body;
+      const resetToken = req.query.token as string;
 
       const existingUser = await prisma.user.findFirst({
         where: {
@@ -140,8 +144,9 @@ class AuthController {
           resetTokenExpiry: null
         },
       })
+      res.send({ message: 'Password reset successfully' });
     } catch (error) {
-
+      next(Error)
     }
   }
 }

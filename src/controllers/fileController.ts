@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 // import FileService from '../services/FileService';
 import { PrismaClient } from '@prisma/client';
 import sharp from 'sharp';
-import { getFileStream, uploadToS3 } from '../services/fileServices';
+import { deleteFileOnS3, getFileStream, uploadToS3 } from '../services/fileServices';
 import crypto from 'crypto';
 
 
@@ -15,9 +15,19 @@ class FileController {
   async uploadFile(req: Request, res: Response): Promise<void> {
     try {
       const { title, description, email }: { title: string, description: string, email: string } = req.body;
-      console.log("🚀 ~ file: fileController.ts:18 ~ FileController ~ uploadFile ~ email:", req.body)
       const file = req.file
       const fileName = generateRandomFileName(16)
+
+      const existingUser = await prisma.user.findUnique({
+        where: {
+          email
+        }
+      })
+
+      if (!existingUser) {
+        res.status(400).json({ message: 'User does not exist' });
+        throw new Error('User does not exist');
+      }
 
       await uploadToS3({ file, fileName })
 
@@ -70,11 +80,13 @@ class FileController {
   async deleteFile(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const deleteFile = await prisma.file.delete({
+      await prisma.file.delete({
         where: {
           id: (id)
         }
       })
+
+      await deleteFileOnS3(id)
       res.json({ message: 'File deleted successfully' });
     } catch (error) {
       console.error(error);

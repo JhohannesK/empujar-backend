@@ -19,7 +19,7 @@ export const sendVerificationEmail = async (email: string, verificationToken: st
          return;
       }
 
-      const verificationLink = `https://empujar.com/reset-password?token=${verificationToken}`;
+      const verificationLink = `http://localhost:8000/auth/reset-password?token=${verificationToken}`;
 
       const emailContent = {
          from:
